@@ -1,0 +1,12 @@
+# ROS2 build files
+build/
+install/
+log/
+
+# VSCode and editor files
+.vscode/
+*.swp
+
+# Python cache
+__pycache__/
+*.pyc
