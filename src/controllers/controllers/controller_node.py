@@ -15,7 +15,8 @@ from geometry_msgs.msg import Vector3
 
 class PIDController(Node):
     def __init__(self):
-        
+        super().__init__("Position_Controller")
+
         # Subscriber to /odom topic
         self.odometry_subscriber = self.create_subscription(Vector3, 'odom', self.odometry_callback, 10)
 
@@ -26,8 +27,8 @@ class PIDController(Node):
         self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vek', 10)
 
         # Current Setpoint Values
-        self.x = 0.0
-        self.y = 0.0
+        self.setpoint_x = 0.0
+        self.setpoint_y = 0.0
 
         # Declare parameters for controlling maximum speeds
         self.declare_parameter('MAX_V', 1.0)
@@ -66,14 +67,59 @@ class PIDController(Node):
     def odometry_callback(self, msg):
         x = msg.x
         y = msg.y
-        theta = msg.z
+        ang = self.normalizeAngle(msg.z)
 
+        # Calc difference in sample time
         curr_time = self.get_clock().now().nanoseconds * 1e-9
         dt = curr_time - self.prev_sample_time
-        
 
+        # Calculate position erros
+        error_x = self.setpoint_x - x 
+        error_y = self.setpoint_y - y
+
+        # Use a distance error to calculate needed velocity
+        error_pos = math.sqrt(error_x**2 + error_y**2)
+        error_d_pos = (error_pos - self.prev_error_pos) / dt
+        self.integral_pos += error_pos * dt
+        
+        # Control input for linear velocity
+        v = error_pos * self.kp_pos + error_d_pos * self.kd_pos + self.integral_pos * self.ki_pos
+
+        # Use heading to calculate necessary angular veolcity
+        target_ang = math.atan2(error_y, error_x)
+
+        error_ang = self.normalizeAngle(target_ang - ang)
+        error_d_ang = self.normalizeAngle((error_ang - self.prev_error_ang) / dt)
+        self.integral_ang += error_ang * dt
+
+        # Control input for angular velocity
+        w = error_ang * self.kp_head + error_d_ang * self.kd_head + self.integral_ang * self.ki_head
+
+        # Stop the robot if it's in an acceptable position
+        if error_pos <= 0.01:
+            v = 0.0
+            w = 0.0
+        
+        # Publish to robot
+        cmd = Twist()
+        cmd.linear.x = max(min(v, self.MAX_V), -self.MIN_V)
+        cmd.angular.z = max(min(w, self.MAX_W), -self.MAX_W)
+        
+        self.cmd_vel_publisher.publish(cmd)
+
+        # Update necessary variables for next calculation
+        self.prev_error_pos = error_pos
+        self.prev_error_ang = error_ang
+    
+    # Updates setpoints
     def setpoint_callback(self, msg):
-        pass
+        self.setpoint_x = msg.x
+        self.setpoint_y = msg.y
+
+    # Function for normalizing angles to the range of -π to π
+    def normalizeAngle(self, angle):
+        return (angle + math.pi) % (2 * math.pi) - math.pi
+    
 def main(args=None):
     rclpy.init(args=args)
     controller = positionController()
