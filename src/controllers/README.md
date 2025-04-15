@@ -3,8 +3,8 @@ This ROS package includes multiple nodes that deal with different control method
 
 ## Launch files
 - **Dead Reckoning:** `Dead Reckoning`
-- - **Info:** Initializes `controller_node` and `odometry_node` to track robot location
-- - **Usage:** Interacts with the `/setpoint` to read next desired setpoint and head to that location
+   - **Info:** Initializes `controller_node` and `odometry_node` to track robot location
+   - **Usage:** Interacts with the `/setpoint` to read next desired setpoint and head to that location
    
 ## Node Information
 
