@@ -12,13 +12,15 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Vector3
+from nav_msgs.msg import Odometry
+from tf_transformations import euler_from_quaternion
 
 class PIDController(Node):
     def __init__(self):
         super().__init__("Position_Controller")
 
         # Subscriber to /odom topic
-        self.odometry_subscriber = self.create_subscription(Vector3, 'odom', self.odometry_callback, 10)
+        self.odometry_subscriber = self.create_subscription(Odometry, 'odom', self.odometry_callback, 10)
 
         # Subscriber to /setpoint topic
         self.setpoint_subscriber = self.create_subscription(Vector3, 'subscription', self.setpoint_callback, 10)
@@ -65,14 +67,18 @@ class PIDController(Node):
         self.kd_head = self.get_parameter('KdHead').get_parameter_value().double_value
 
     def odometry_callback(self, msg):
-        x = msg.x
-        y = msg.y
-        ang = self.normalizeAngle(msg.z)
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        q = msg.pose.pose.orientation
+        _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        
+        ang = self.normalizeAngle(yaw)
 
         # Calc difference in sample time
-        curr_time = self.get_clock().now().nanoseconds * 1e-9
+        curr_time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
         dt = curr_time - self.prev_sample_time
-
+        self.prev_sample_time = curr_time
+        
         # Calculate position erros
         error_x = self.setpoint_x - x 
         error_y = self.setpoint_y - y
