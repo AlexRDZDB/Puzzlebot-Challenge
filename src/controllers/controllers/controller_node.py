@@ -8,25 +8,26 @@ Subscribe to the /odom topic to obtain Robot position
 
 import math
 
+import tf2_ros
 import rclpy
+from rclpy import qos
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Vector3
 from nav_msgs.msg import Odometry
-from tf_transformations import euler_from_quaternion
 
 class PIDController(Node):
     def __init__(self):
         super().__init__("Position_Controller")
 
         # Subscriber to /odom topic
-        self.odometry_subscriber = self.create_subscription(Odometry, 'odom', self.odometry_callback, 10)
+        self.odometry_subscriber = self.create_subscription(Odometry, 'odom', self.odometry_callback, qos.qos_profile_sensor_data)
 
         # Subscriber to /setpoint topic
-        self.setpoint_subscriber = self.create_subscription(Vector3, 'subscription', self.setpoint_callback, 10)
+        self.setpoint_subscriber = self.create_subscription(Vector3, 'setpoint', self.setpoint_callback, 10)
 
         # Publisher to /cmd_vel topic
-        self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vek', 10)
+        self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
 
         # Current Setpoint Values
         self.setpoint_x = 0.0
@@ -37,13 +38,13 @@ class PIDController(Node):
         self.declare_parameter('MAX_W', 3.0)
 
         # Declare parameters for control constants
-        self.declare_parameter('KpPos', 1.0)
-        self.declare_parameter('KdPos', 0.01) # For adjusting linear velocities
-        self.declare_parameter('KiPos', 0.01)
+        self.declare_parameter('KpPos', 10.0)
+        self.declare_parameter('KdPos', 0.1) # For adjusting linear velocities
+        self.declare_parameter('KiPos', 0.1)
 
-        self.declare_parameter('KpHead', 1.0)
-        self.declare_parameter('KiHead', 0.01) # For adjusting angular velocities
-        self.declare_parameter('KdHead', 0.01)
+        self.declare_parameter('KpHead', 5.0)
+        self.declare_parameter('KiHead', 0.001) # For adjusting angular velocities
+        self.declare_parameter('KdHead', 0.1)
 
         # Controller Variables
         self.prev_error_pos = 0.0
@@ -66,11 +67,14 @@ class PIDController(Node):
         self.ki_head = self.get_parameter('KiHead').get_parameter_value().double_value
         self.kd_head = self.get_parameter('KdHead').get_parameter_value().double_value
 
+        # Message Success
+        self.get_logger().info("Controller Node started")
+
     def odometry_callback(self, msg):
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
         q = msg.pose.pose.orientation
-        _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        yaw = q.z
         
         ang = self.normalizeAngle(yaw)
 
@@ -108,7 +112,7 @@ class PIDController(Node):
         
         # Publish to robot
         cmd = Twist()
-        cmd.linear.x = max(min(v, self.MAX_V), -self.MIN_V)
+        cmd.linear.x = max(min(v, self.MAX_V), -self.MAX_V)
         cmd.angular.z = max(min(w, self.MAX_W), -self.MAX_W)
         
         self.cmd_vel_publisher.publish(cmd)
@@ -128,7 +132,7 @@ class PIDController(Node):
     
 def main(args=None):
     rclpy.init(args=args)
-    controller = positionController()
+    controller = PIDController()
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()

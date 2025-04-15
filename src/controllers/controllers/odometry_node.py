@@ -5,7 +5,6 @@
 '''
 
 import rclpy
-import transforms3d
 import math
 import signal, os, time
 
@@ -18,7 +17,7 @@ from tf2_ros import TransformBroadcaster
 
 class RobotLocalization(Node):
     def __init__(self):
-        super().__init__('localization-node')
+        super().__init__('localization_node')
 
         # Publisher to Odom topic of type odometry
         self.odometry_publisher = self.create_publisher(Odometry, 'odom', qos.qos_profile_sensor_data)
@@ -106,12 +105,11 @@ class RobotLocalization(Node):
             odom_msg.pose.pose.position.y = self.Y
             odom_msg.pose.pose.position.z = 0.0
 
-            # Send angle information
-            q1 = transforms3d.euler.euler2quat(0,0, self.Theta) # Transform to quaternions to upload to message
-            odom_msg.pose.orientation.x = q1[1]
-            odom_msg.pose.orientation.y = q1[2]
-            odom_msg.pose.orientation.z = q1[3]
-            odom_msg.pose.orientation.w = q1[0]
+            # Send angle information -> Use quaternions as regular angles for now
+            odom_msg.pose.pose.orientation.x = 0.0
+            odom_msg.pose.pose.orientation.y = 0.0
+            odom_msg.pose.pose.orientation.z = self.Theta
+            odom_msg.pose.pose.orientation.w = 0.0
 
             # Send velocities
             odom_msg.twist.twist.linear.x = V
@@ -125,6 +123,7 @@ class RobotLocalization(Node):
             # Publish message to /odom topic
             self.odometry_publisher.publish(odom_msg)
             self.last_time = self.curr_time
+
 
     # Function for handling node shutdown
     def stop_handler(self, signum, frame):
