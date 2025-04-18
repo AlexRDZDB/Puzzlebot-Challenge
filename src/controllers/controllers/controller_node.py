@@ -38,7 +38,7 @@ class PIDController(Node):
         self.declare_parameter('MAX_W', 3.0)
 
         # Declare parameters for control constants
-        self.declare_parameter('KpPos', 10.0)
+        self.declare_parameter('KpPos', 2.5)
         self.declare_parameter('KdPos', 0.1) # For adjusting linear velocities
         self.declare_parameter('KiPos', 0.1)
 
@@ -106,9 +106,11 @@ class PIDController(Node):
         w = error_ang * self.kp_head + error_d_ang * self.kd_head + self.integral_ang * self.ki_head
 
         # Stop the robot if it's in an acceptable position
-        if error_pos <= 0.01:
+        if error_pos <= 0.05:
             v = 0.0
             w = 0.0
+            self.integral_pos = 0.0  # Optionally clear integrators
+            self.integral_ang = 0.0
         
         # Publish to robot
         cmd = Twist()
