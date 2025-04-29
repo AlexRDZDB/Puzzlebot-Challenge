@@ -1,8 +1,9 @@
 '''
 PID Controller Node for Point to Point Navigation
 
-Usage: Send a Vector3 message containing the setpoint and desired position to the robot
+Usage: Send a Vector3 message containing the setpoint and desired position to the speed controller node via pos_signal topic
 Subscribe to the /odom topic to obtain Robot position
+Subscribe to the /curr_setpoint to obtain robot's current target position
 
 '''
 
@@ -18,24 +19,24 @@ from nav_msgs.msg import Odometry
 
 class PIDController(Node):
     def __init__(self):
-        super().__init__("Position_Controller")
+        super().__init__("position_controller")
 
         # Subscriber to /odom topic
         self.odometry_subscriber = self.create_subscription(Odometry, 'odom', self.odometry_callback, qos.qos_profile_sensor_data)
 
         # Subscriber to /setpoint topic
-        self.setpoint_subscriber = self.create_subscription(Vector3, 'setpoint', self.setpoint_callback, 10)
+        self.setpoint_subscriber = self.create_subscription(Vector3, 'curr_setpoint', self.setpoint_callback, 10)
 
         # Publisher to /cmd_vel topic
-        self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.pos_singal_publisher = self.create_publisher(Twist, 'pos_signal', 10)
 
-        # Current Setpoint Values
+        # Initial Setpoint Values
         self.setpoint_x = 0.0
         self.setpoint_y = 0.0
 
-        # Declare parameters for controlling maximum speeds
+        # Declare parameters for controlling maximum speeds -> Ranges from 0% to 100%
         self.declare_parameter('MAX_V', 1.0)
-        self.declare_parameter('MAX_W', 3.0)
+        self.declare_parameter('MAX_W', 1.0)
 
         # Declare parameters for control constants
         self.declare_parameter('KpPos', 2.5)
