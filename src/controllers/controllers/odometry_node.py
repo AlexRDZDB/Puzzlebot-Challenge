@@ -6,14 +6,12 @@
 
 import rclpy
 import math
-import signal, os, time
+import signal
 
 from rclpy import qos
 from rclpy.node import Node
 from std_msgs.msg import Float32
-from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
-from tf2_ros import TransformBroadcaster
 
 class RobotLocalization(Node):
     def __init__(self):
@@ -75,7 +73,7 @@ class RobotLocalization(Node):
         dt = self.curr_time - self.last_time
 
         # Ensure timeframe is acceptable
-        if dt > self.sample_time:
+        if dt >= self.sample_time:
 
             # Calculate tangential velocities
             vr = self.wr * self.wheel_radius
@@ -124,7 +122,14 @@ class RobotLocalization(Node):
             self.odometry_publisher.publish(odom_msg)
             self.last_time = self.curr_time
 
-
+            self.get_logger().info(
+                "\n📡 Odom Published\n"
+                + "┌" + "─" * 48 + "┐\n"
+                + f"│ 🧭 Position       →  X: {self.X:6.2f}   Y: {self.Y:6.2f}       │\n"
+                + f"│ 🔄 Orientation    →  θ: {self.Theta:6.2f} rad               │\n"
+                + f"│ 🚗 Velocity      →  V: {V:6.3f} m/s   W: {W:6.3f} rad/s │\n"
+                + "└" + "─" * 48 + "┘"
+            )
     # Function for handling node shutdown
     def stop_handler(self, signum, frame):
         self.get_logger().info('SIGINT received. Shutting down...')
