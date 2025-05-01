@@ -20,8 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'controller_node = controllers.controller_node:main',
-            'odometry_node = controllers.odometry_node:main'
+            'position_controller = controllers.position_controller:main',
+            'odometry_node = controllers.odometry_node:main',
+            'speed_controller = controllers.speed_controller:main'
         ],
     },
 )

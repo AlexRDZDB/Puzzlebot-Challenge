@@ -7,8 +7,8 @@ def generate_launch_description():
         # Launch controller_node from controllers package
         Node(
             package='controllers',
-            executable='controller_node',
-            name='controller_node',
+            executable='position_controller',
+            name='position_controller',
             output='screen',
             parameters=[{'param_name': 'default_value'}]  # Default parameters (if needed)
         ),

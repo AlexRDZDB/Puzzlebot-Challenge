@@ -28,7 +28,7 @@ class PIDController(Node):
         self.setpoint_subscriber = self.create_subscription(Vector3, 'curr_setpoint', self.setpoint_callback, 10)
 
         # Publisher to /cmd_vel topic
-        self.pos_singal_publisher = self.create_publisher(Twist, 'pos_signal', 10)
+        self.pos_signal_publisher = self.create_publisher(Twist, 'pos_signal', 10)
 
         # Initial Setpoint Values
         self.setpoint_x = 0.0
@@ -118,7 +118,7 @@ class PIDController(Node):
         cmd.linear.x = max(min(v, self.MAX_V), -self.MAX_V)
         cmd.angular.z = max(min(w, self.MAX_W), -self.MAX_W)
         
-        self.cmd_vel_publisher.publish(cmd)
+        self.pos_signal_publisher.publish(cmd)
 
         # Update necessary variables for next calculation
         self.prev_error_pos = error_pos
