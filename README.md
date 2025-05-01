@@ -1,5 +1,5 @@
-# Puzzlebot-Challenge
-ROS2 Package for controlling a differential drive robot.
+# Puzzlebot Workspace
+ROS2 Packages for controlling a Puzzlebot Robot provided by Manchester Robotics
 
 ## Packages
 
