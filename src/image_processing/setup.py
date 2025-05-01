@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'camera_sim = image_processing.camera_sim:main',
-            'image_processor = image_processing.image_processor:main'
+            'image_processor = image_processing.image_processor:main',
+            'traffic_signal = image_processing.traffic_signal_detector:main'
         ],
     },
 )

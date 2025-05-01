@@ -70,8 +70,24 @@ class ImageProcessor(Node):
             combined_mask = cv2.bitwise_or(mask_red, mask_yellow)
             combined_mask = cv2.bitwise_or(combined_mask, mask_green)
 
+            # Erode Mask
+            kernel = np.ones((5,5), np.uint8)
+
+            eroded_mask = cv2.erode(combined_mask, kernel, iterations=3)
+
+            dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=3)
+
+            # Find contours from the binary mask
+            contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Create a new blank mask
+            filled_mask = np.zeros_like(eroded_mask)
+
+            # Fill each contour
+            cv2.drawContours(filled_mask, contours, -1, 255, thickness=cv2.FILLED)
+
             # Apply mask to original image
-            result = cv2.bitwise_and(self.curr_frame, self.curr_frame, mask=combined_mask)
+            result = cv2.bitwise_and(self.curr_frame, self.curr_frame, mask=filled_mask)
 
             # Publish result to traffic topic
             msg = self.bridge.cv2_to_imgmsg(result, encoding="bgr8")
