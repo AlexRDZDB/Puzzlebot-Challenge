@@ -22,7 +22,8 @@ setup(
         'console_scripts': [
             'camera_sim = image_processing.camera_sim:main',
             'image_processor = image_processing.image_processor:main',
-            'traffic_signal = image_processing.traffic_signal_detector:main'
+            'traffic_signal = image_processing.traffic_signal_detector:main',
+            'occupancy = image_processing.publish_occupancygrid:main'
         ],
     },
 )

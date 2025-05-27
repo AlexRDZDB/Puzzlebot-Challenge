@@ -22,7 +22,7 @@ class ImageProcessor(Node):
 
         # Create subscriber to receive image publisher
         self.img_subscriber = self.create_subscription(Image, 'camera/image_raw', self.img_callback, 10)
-
+        
         # CvBridge object
         self.bridge = CvBridge()
 
